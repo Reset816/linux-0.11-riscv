@@ -27,6 +27,7 @@
 #include <linux/sched.h>
 #include <linux/head.h>
 #include <linux/kernel.h>
+#include <string.h>
 
 volatile void do_exit(long code);
 
@@ -51,8 +52,12 @@ current->start_code + current->end_code)
 
 static long HIGH_MEMORY = 0;
 
-#define copy_page(from,to) \
-__asm__("cld ; rep ; movsl"::"S" (from),"D" (to),"c" (1024):) 
+// copy 4KB
+void copy_page(unsigned long * from, unsigned long * to)
+{
+    for(unsigned long i = 0;i < 1024UL;i ++)
+        *(to+i) = *(from+i);
+}
 
 static unsigned char mem_map [ PAGING_PAGES ] = {0,};
 
@@ -62,24 +67,18 @@ static unsigned char mem_map [ PAGING_PAGES ] = {0,};
  */
 unsigned long get_free_page(void)
 {
-register unsigned long __res asm("ax");
+    unsigned long i = PAGING_PAGES;
+    unsigned long addr;
 
-__asm__("std ; repne ; scasb\n\t"
-	"jne 1f\n\t"
-	"movb $1,1(%%edi)\n\t"
-	"sall $12,%%ecx\n\t"
-	"addl %2,%%ecx\n\t"
-	"movl %%ecx,%%edx\n\t"
-	"movl $1024,%%ecx\n\t"
-	"leal 4092(%%edx),%%edi\n\t"
-	"rep ; stosl\n\t"
-	"movl %%edx,%%eax\n"
-	"1:"
-	:"=a" (__res)
-	:"0" (0),"i" (LOW_MEM),"c" (PAGING_PAGES),
-	"D" (mem_map+PAGING_PAGES-1)
-	:) ;
-return __res;
+    while(--i)
+        if(mem_map[i] == 0){
+            mem_map[i] = 1;
+            addr = (i << 12) + LOW_MEM;
+            memset((void *)addr,0,4096);
+            return addr;
+        }
+
+    return 0;
 }
 
 /*

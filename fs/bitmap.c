@@ -10,39 +10,47 @@
 #include <linux/sched.h>
 #include <linux/kernel.h>
 
-#define clear_block(addr) \
-__asm__("cld\n\t" \
-	"rep\n\t" \
-	"stosl" \
-	::"a" (0),"c" (BLOCK_SIZE/4),"D" ((long) (addr)):) 
+static void clear_block(unsigned long addr){
+    for(unsigned long i = 0;i < BLOCK_SIZE;i += sizeof(unsigned long)){
+        *((unsigned long *)(addr + i)) = 0x0;
+    }
+}
 
-#define set_bit(nr,addr) ({\
-register int res __asm__("ax"); \
-__asm__ __volatile__("btsl %2,%3\n\tsetb %%al": \
-"=a" (res):"0" (0),"r" (nr),"m" (*(addr))); \
-res;})
+static unsigned long set_bit(unsigned long nr,unsigned long addr)
+{
+    addr += (nr >> 3);
+    unsigned long bit = nr & 0x07;
+    unsigned long old = ((*((unsigned long *)addr)) >> bit) & 0x01;
+    *((unsigned long *)addr) = *((unsigned long *)addr) | (1 << bit);
+    return old;
+}
 
-#define clear_bit(nr,addr) ({\
-register int res __asm__("ax"); \
-__asm__ __volatile__("btrl %2,%3\n\tsetnb %%al": \
-"=a" (res):"0" (0),"r" (nr),"m" (*(addr))); \
-res;})
+static unsigned long clear_bit(unsigned long nr,unsigned long addr)
+{
+    addr += (nr >> 3);
+    unsigned long bit = nr & 0x07;
+    unsigned long old = (~((*((unsigned long *)addr)) >> bit)) & 0x01;
+    *((unsigned long *)addr) = *((unsigned long *)addr) & (~(1 << bit));
+    return old;
+}
 
-#define find_first_zero(addr) ({ \
-int __res; \
-__asm__("cld\n" \
-	"1:\tlodsl\n\t" \
-	"notl %%eax\n\t" \
-	"bsfl %%eax,%%edx\n\t" \
-	"je 2f\n\t" \
-	"addl %%edx,%%ecx\n\t" \
-	"jmp 3f\n" \
-	"2:\taddl $32,%%ecx\n\t" \
-	"cmpl $8192,%%ecx\n\t" \
-	"jl 1b\n" \
-	"3:" \
-	:"=c" (__res):"c" (0),"S" (addr):) ; \
-__res;})
+static unsigned long find_first_zero(unsigned long addr)
+{
+    unsigned long i;
+
+    for(i = 0;i < BLOCK_SIZE;i += sizeof(unsigned long)){
+        unsigned long v = ~(*((unsigned long *)addr));
+
+        if(v != 0){
+            for(unsigned long j = 0;j < (sizeof(unsigned long) << 3);j++){
+                if(v & 0x01)
+                    return (i << 3) + j;
+                v >>= 1;
+            }
+        }
+    }
+    return i << 3;
+}
 
 void free_block(int dev, int block)
 {

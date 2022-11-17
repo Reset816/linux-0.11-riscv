@@ -19,10 +19,13 @@ int sync_dev(int dev);
 void wait_for_keypress(void);
 
 /* set_bit uses setb, as gas doesn't recognize setc */
-#define set_bit(bitnr,addr) ({ \
-register int __res __asm__("ax"); \
-__asm__("bt %2,%3;setb %%al":"=a" (__res):"a" (0),"r" (bitnr),"m" (*(addr))); \
-__res; })
+static unsigned long set_bit(unsigned long bitnr,unsigned long addr)
+{
+	addr += (bitnr >> 3);
+    unsigned long bit = bitnr & 0x07;
+    unsigned long old = ((*((unsigned char *)addr)) >> bit) & 0x01;
+    return old;
+}
 
 struct super_block super_block[NR_SUPER];
 /* this is initialized in init/main.c */

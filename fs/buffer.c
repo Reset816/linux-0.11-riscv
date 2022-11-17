@@ -282,12 +282,13 @@ struct buffer_head * bread(int dev,int block)
 	return NULL;
 }
 
-#define COPYBLK(from,to) \
-__asm__("cld\n\t" \
-	"rep\n\t" \
-	"movsl\n\t" \
-	::"c" (BLOCK_SIZE/4),"S" (from),"D" (to) \
-	:) 
+void COPYBLK(unsigned long from,unsigned long to)
+{
+    unsigned long i;
+
+    for(i = 0;i < BLOCK_SIZE;i += sizeof(unsigned long))
+        *((unsigned long *)(to + i)) = *((unsigned long *)(from + i));
+}
 
 /*
  * bread_page reads four buffers into memory at the desired address. It's
