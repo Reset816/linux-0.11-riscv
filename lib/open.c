@@ -1,3 +1,5 @@
+#include "asm/dummy.h"
+
 /*
  *  linux/lib/open.c
  *
@@ -14,7 +16,7 @@ int open(const char * filename, int flag, ...)
 	va_list arg;
 
 	va_start(arg,flag);
-	__asm__("int $0x80"
+	DUMMY_ASM("int $0x80"
 		:"=a" (res)
 		:"0" (__NR_open),"b" (filename),"c" (flag),
 		"d" (va_arg(arg,int)));

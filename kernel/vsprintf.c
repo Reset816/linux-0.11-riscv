@@ -1,3 +1,5 @@
+#include "asm/dummy.h"
+
 /*
  *  linux/kernel/vsprintf.c
  *
@@ -34,7 +36,7 @@ static int skip_atoi(const char **s)
 
 #define do_div(n,base) ({ \
 int __res; \
-__asm__("divl %4":"=a" (n),"=d" (__res):"0" (n),"1" (0),"r" (base)); \
+DUMMY_ASM("divl %4":"=a" (n),"=d" (__res):"0" (n),"1" (0),"r" (base)); \
 __res; })
 
 static char * number(char * str, int num, int base, int size, int precision

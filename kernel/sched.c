@@ -1,3 +1,5 @@
+#include "asm/dummy.h"
+
 /*
  *  linux/kernel/sched.c
  *
@@ -78,15 +80,15 @@ void math_state_restore()
 {
 	if (last_task_used_math == current)
 		return;
-	__asm__("fwait");
+	DUMMY_ASM("fwait");
 	if (last_task_used_math) {
-		__asm__("fnsave %0"::"m" (last_task_used_math->tss.i387));
+		DUMMY_ASM("fnsave %0"::"m" (last_task_used_math->tss.i387));
 	}
 	last_task_used_math=current;
 	if (current->used_math) {
-		__asm__("frstor %0"::"m" (current->tss.i387));
+		DUMMY_ASM("frstor %0"::"m" (current->tss.i387));
 	} else {
-		__asm__("fninit"::);
+		DUMMY_ASM("fninit"::);
 		current->used_math=1;
 	}
 }
@@ -400,7 +402,7 @@ void sched_init(void)
 		p++;
 	}
 /* Clear NT, so that we won't have troubles with that later on */
-	__asm__("pushfl ; andl $0xffffbfff,(%esp) ; popfl");
+	DUMMY_ASM("pushfl ; andl $0xffffbfff,(%esp) ; popfl");
 	ltr(0);
 	lldt(0);
 	outb_p(0x36,0x43);		/* binary, mode 3, LSB/MSB, ch 0 */

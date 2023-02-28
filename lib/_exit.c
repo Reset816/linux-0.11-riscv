@@ -1,3 +1,5 @@
+#include "asm/dummy.h"
+
 /*
  *  linux/lib/_exit.c
  *
@@ -9,5 +11,5 @@
 
 volatile void _exit(int exit_code)
 {
-	__asm__("int $0x80"::"a" (__NR_exit),"b" (exit_code));
+	DUMMY_ASM("int $0x80"::"a" (__NR_exit),"b" (exit_code));
 }

@@ -1,3 +1,5 @@
+#include "asm/dummy.h"
+
 /*
  *  linux/mm/memory.c
  *
@@ -38,7 +40,7 @@ static inline volatile void oom(void)
 }
 
 #define invalidate() \
-__asm__("movl %%eax,%%cr3"::"a" (0))
+DUMMY_ASM("movl %%eax,%%cr3"::"a" (0))
 
 /* these are not to be changed without changing head.s etc */
 #define LOW_MEM 0x100000

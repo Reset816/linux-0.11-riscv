@@ -1,5 +1,7 @@
+#include "asm/dummy.h"
+
 #define move_to_user_mode() \
-__asm__ ("movl %%esp,%%eax\n\t" \
+DUMMY_ASM ("movl %%esp,%%eax\n\t" \
 	"pushl $0x17\n\t" \
 	"pushl %%eax\n\t" \
 	"pushfl\n\t" \
@@ -13,14 +15,14 @@ __asm__ ("movl %%esp,%%eax\n\t" \
 	"movw %%ax,%%gs" \
 	:::) 
 
-#define sti() __asm__ ("sti"::)
-#define cli() __asm__ ("cli"::)
-#define nop() __asm__ ("nop"::)
+#define sti() DUMMY_ASM ("sti"::)
+#define cli() DUMMY_ASM ("cli"::)
+#define nop() DUMMY_ASM ("nop"::)
 
-#define iret() __asm__ ("iret"::)
+#define iret() DUMMY_ASM ("iret"::)
 
 #define _set_gate(gate_addr,type,dpl,addr) \
-__asm__ ("movw %%dx,%%ax\n\t" \
+DUMMY_ASM ("movw %%dx,%%ax\n\t" \
 	"movw %0,%%dx\n\t" \
 	"movl %%eax,%1\n\t" \
 	"movl %%edx,%2" \
@@ -50,7 +52,7 @@ __asm__ ("movw %%dx,%%ax\n\t" \
 		((limit) & 0x0ffff); }
 
 #define _set_tssldt_desc(n,addr,type) \
-__asm__ ("movw $104,%1\n\t" \
+DUMMY_ASM ("movw $104,%1\n\t" \
 	"movw %%ax,%2\n\t" \
 	"rorl $16,%%eax\n\t" \
 	"movb %%al,%3\n\t" \

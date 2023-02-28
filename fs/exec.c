@@ -1,3 +1,5 @@
+#include "asm/dummy.h"
+
 /*
  *  linux/fs/exec.c
  *
@@ -166,7 +168,7 @@ static unsigned long change_ldt(unsigned long text_size,unsigned long * page)
 	set_base(current->ldt[2],data_base);
 	set_limit(current->ldt[2],data_limit);
 /* make sure fs points to the NEW data segment */
-	__asm__("pushl $0x17\n\tpop %%fs"::);
+	DUMMY_ASM("pushl $0x17\n\tpop %%fs"::);
 	data_base += data_limit;
 	for (i=MAX_ARG_PAGES-1 ; i>=0 ; i--) {
 		data_base -= PAGE_SIZE;

@@ -1,3 +1,5 @@
+#include "asm/dummy.h"
+
 /*
  *  linux/kernel/fork.c
  *
@@ -78,7 +80,7 @@ int copy_process(int nr,long ebp,long edi,long esi,long gs,long none,
 	if (!p)
 		return -EAGAIN;
 	task[nr] = p;
-    __asm__ volatile ("cld");
+    DUMMY_ASM ("cld");
 	*p = *current;	/* NOTE! this doesn't copy the supervisor stack */
 	p->state = TASK_UNINTERRUPTIBLE;
 	p->pid = last_pid;
@@ -112,7 +114,7 @@ int copy_process(int nr,long ebp,long edi,long esi,long gs,long none,
 	p->tss.ldt = _LDT(nr);
 	p->tss.trace_bitmap = 0x80000000;
 	if (last_task_used_math == current)
-		__asm__("clts ; fnsave %0"::"m" (p->tss.i387));
+		DUMMY_ASM("clts ; fnsave %0"::"m" (p->tss.i387));
 	if (copy_mem(nr,p)) {
 		task[nr] = NULL;
 		free_page((long) p);

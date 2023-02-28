@@ -1,3 +1,5 @@
+#include "asm/dummy.h"
+
 #ifndef _SCHED_H
 #define _SCHED_H
 
@@ -154,10 +156,10 @@ extern void wake_up(struct task_struct ** p);
 #define FIRST_LDT_ENTRY (FIRST_TSS_ENTRY+1)
 #define _TSS(n) ((((unsigned long) n)<<4)+(FIRST_TSS_ENTRY<<3))
 #define _LDT(n) ((((unsigned long) n)<<4)+(FIRST_LDT_ENTRY<<3))
-#define ltr(n) __asm__("ltr %%ax"::"a" (_TSS(n)))
-#define lldt(n) __asm__("lldt %%ax"::"a" (_LDT(n)))
+#define ltr(n) DUMMY_ASM("ltr %%ax"::"a" (_TSS(n)))
+#define lldt(n) DUMMY_ASM("lldt %%ax"::"a" (_LDT(n)))
 #define str(n) \
-__asm__("str %%ax\n\t" \
+DUMMY_ASM("str %%ax\n\t" \
 	"subl %2,%%eax\n\t" \
 	"shrl $4,%%eax" \
 	:"=a" (n) \
@@ -170,7 +172,7 @@ __asm__("str %%ax\n\t" \
  */
 #define switch_to(n) {\
 struct {long a,b;} __tmp; \
-__asm__("cmpl %%ecx,current\n\t" \
+DUMMY_ASM("cmpl %%ecx,current\n\t" \
 	"je 1f\n\t" \
 	"movw %%dx,%1\n\t" \
 	"xchgl %%ecx,current\n\t" \
@@ -186,7 +188,7 @@ __asm__("cmpl %%ecx,current\n\t" \
 #define PAGE_ALIGN(n) (((n)+0xfff)&0xfffff000)
 
 #define _set_base(addr,base)  \
-__asm__ ("push %%edx\n\t" \
+DUMMY_ASM ("push %%edx\n\t" \
 	"movw %%dx,%0\n\t" \
 	"rorl $16,%%edx\n\t" \
 	"movb %%dl,%1\n\t" \
@@ -199,7 +201,7 @@ __asm__ ("push %%edx\n\t" \
 	)
 
 #define _set_limit(addr,limit) \
-__asm__ ("push %%edx\n\t" \
+DUMMY_ASM ("push %%edx\n\t" \
 	"movw %%dx,%0\n\t" \
 	"rorl $16,%%edx\n\t" \
 	"movb %1,%%dh\n\t" \
@@ -218,7 +220,7 @@ __asm__ ("push %%edx\n\t" \
 /**
 #define _get_base(addr) ({\
 unsigned long __base; \
-__asm__("movb %3,%%dh\n\t" \
+DUMMY_ASM("movb %3,%%dh\n\t" \
 	"movb %2,%%dl\n\t" \
 	"shll $16,%%edx\n\t" \
 	"movw %1,%%dx" \
@@ -233,7 +235,7 @@ __base;})
 static inline unsigned long _get_base(char * addr)
 {
          unsigned long __base;
-         __asm__("movb %3,%%dh\n\t"
+         DUMMY_ASM("movb %3,%%dh\n\t"
                  "movb %2,%%dl\n\t"
                  "shll $16,%%edx\n\t"
                  "movw %1,%%dx"
@@ -248,7 +250,7 @@ static inline unsigned long _get_base(char * addr)
 
 #define get_limit(segment) ({ \
 unsigned long __limit; \
-__asm__("lsll %1,%0\n\tincl %0":"=r" (__limit):"r" (segment)); \
+DUMMY_ASM("lsll %1,%0\n\tincl %0":"=r" (__limit):"r" (segment)); \
 __limit;})
 
 #endif

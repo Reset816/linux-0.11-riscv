@@ -1,3 +1,5 @@
+#include "asm/dummy.h"
+
 /*
  *  NOTE!!! memcpy(dest,src,n) assumes ds=es=normal data segment. This
  *  goes for all kernel functions (ds=es=kernel space, fs=local data,
@@ -7,7 +9,7 @@
  */
 #define memcpy(dest,src,n) ({ \
 void * _res = dest; \
-__asm__ ("cld;rep;movsb" \
+DUMMY_ASM ("cld;rep;movsb" \
 	::"D" ((long)(_res)),"S" ((long)(src)),"c" ((long) (n)) \
 	:) ; \
 _res; \

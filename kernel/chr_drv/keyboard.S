@@ -35,202 +35,7 @@ e0:	.byte 0
  *  ascii character(s).
  */
 keyboard_interrupt:
-	pushl %eax
-	pushl %ebx
-	pushl %ecx
-	pushl %edx
-	push %ds
-	push %es
-	movl $0x10,%eax
-	mov %ax,%ds
-	mov %ax,%es
-	xorb %al,%al		/* %eax is scan code */
-	inb $0x60,%al
-	cmpb $0xe0,%al
-	je set_e0
-	cmpb $0xe1,%al
-	je set_e1
-	call key_table(,%eax,4)
-	movb $0,e0
-e0_e1:	inb $0x61,%al
-	jmp 1f
-1:	jmp 1f
-1:	orb $0x80,%al
-	jmp 1f
-1:	jmp 1f
-1:	outb %al,$0x61
-	jmp 1f
-1:	jmp 1f
-1:	andb $0x7F,%al
-	outb %al,$0x61
-	movb $0x20,%al
-	outb %al,$0x20
-	pushl $0
-	call do_tty_interrupt
-	addl $4,%esp
-	pop %es
-	pop %ds
-	popl %edx
-	popl %ecx
-	popl %ebx
-	popl %eax
-	iret
-set_e0:	movb $1,e0
-	jmp e0_e1
-set_e1:	movb $2,e0
-	jmp e0_e1
-
-/*
- * This routine fills the buffer with max 8 bytes, taken from
- * %ebx:%eax. (%edx is high). The bytes are written in the
- * order %al,%ah,%eal,%eah,%bl,%bh ... until %eax is zero.
- */
-put_queue:
-	pushl %ecx
-	pushl %edx
-	movl table_list,%edx		# read-queue for console
-	movl head(%edx),%ecx
-1:	movb %al,buf(%edx,%ecx)
-	incl %ecx
-	andl $size-1,%ecx
-	cmpl tail(%edx),%ecx		# buffer full - discard everything
-	je 3f
-	shrdl $8,%ebx,%eax
-	je 2f
-	shrl $8,%ebx
-	jmp 1b
-2:	movl %ecx,head(%edx)
-	movl proc_list(%edx),%ecx
-	testl %ecx,%ecx
-	je 3f
-	movl $0,(%ecx)
-3:	popl %edx
-	popl %ecx
-	ret
-
-ctrl:	movb $0x04,%al
-	jmp 1f
-alt:	movb $0x10,%al
-1:	cmpb $0,e0
-	je 2f
-	addb %al,%al
-2:	orb %al,mode
-	ret
-unctrl:	movb $0x04,%al
-	jmp 1f
-unalt:	movb $0x10,%al
-1:	cmpb $0,e0
-	je 2f
-	addb %al,%al
-2:	notb %al
-	andb %al,mode
-	ret
-
-lshift:
-	orb $0x01,mode
-	ret
-unlshift:
-	andb $0xfe,mode
-	ret
-rshift:
-	orb $0x02,mode
-	ret
-unrshift:
-	andb $0xfd,mode
-	ret
-
-caps:	testb $0x80,mode
-	jne 1f
-	xorb $4,leds
-	xorb $0x40,mode
-	orb $0x80,mode
-set_leds:
-	call kb_wait
-	movb $0xed,%al		/* set leds command */
-	outb %al,$0x60
-	call kb_wait
-	movb leds,%al
-	outb %al,$0x60
-	ret
-uncaps:	andb $0x7f,mode
-	ret
-scroll:
-	xorb $1,leds
-	jmp set_leds
-num:	xorb $2,leds
-	jmp set_leds
-
-/*
- *  curosr-key/numeric keypad cursor keys are handled here.
- *  checking for numeric keypad etc.
- */
-cursor:
-	subb $0x47,%al
-	jb 1f
-	cmpb $12,%al
-	ja 1f
-	jne cur2		/* check for ctrl-alt-del */
-	testb $0x0c,mode
-	je cur2
-	testb $0x30,mode
-	jne reboot
-cur2:	cmpb $0x01,e0		/* e0 forces cursor movement */
-	je cur
-	testb $0x02,leds	/* not num-lock forces cursor */
-	je cur
-	testb $0x03,mode	/* shift forces cursor */
-	jne cur
-	xorl %ebx,%ebx
-	movb num_table(%eax),%al
-	jmp put_queue
-1:	ret
-
-cur:	movb cur_table(%eax),%al
-	cmpb $'9,%al
-	ja ok_cur
-	movb $'~,%ah
-ok_cur:	shll $16,%eax
-	movw $0x5b1b,%ax
-	xorl %ebx,%ebx
-	jmp put_queue
-
-#if defined(KBD_FR)
-num_table:
-	.ascii "789 456 1230."
-#else
-num_table:
-	.ascii "789 456 1230,"
-#endif
-cur_table:
-	.ascii "HA5 DGC YB623"
-
-/*
- * this routine handles function keys
- */
-func:
-	pushl %eax
-	pushl %ecx
-	pushl %edx
-	call show_stat
-	popl %edx
-	popl %ecx
-	popl %eax
-	subb $0x3B,%al
-	jb end_func
-	cmpb $9,%al
-	jbe ok_func
-	subb $18,%al
-	cmpb $10,%al
-	jb end_func
-	cmpb $11,%al
-	ja end_func
-ok_func:
-	cmpl $4,%ecx		/* check that there is enough room */
-	jl end_func
-	movl func_table(,%eax,4),%eax
-	xorl %ebx,%ebx
-	jmp put_queue
-end_func:
+	nop
 	ret
 
 /*
@@ -451,48 +256,16 @@ alt_map:
  * and which have just one character returns.
  */
 do_self:
-	lea alt_map,%ebx
-	testb $0x20,mode		/* alt-gr */
-	jne 1f
-	lea shift_map,%ebx
-	testb $0x03,mode
-	jne 1f
-	lea key_map,%ebx
-1:	movb (%ebx,%eax),%al
-	orb %al,%al
-	je none
-	testb $0x4c,mode		/* ctrl or caps */
-	je 2f
-	cmpb $'a,%al
-	jb 2f
-	cmpb $'},%al
-	ja 2f
-	subb $32,%al
-2:	testb $0x0c,mode		/* ctrl */
-	je 3f
-	cmpb $64,%al
-	jb 3f
-	cmpb $64+32,%al
-	jae 3f
-	subb $64,%al
-3:	testb $0x10,mode		/* left alt */
-	je 4f
-	orb $0x80,%al
-4:	andl $0xff,%eax
-	xorl %ebx,%ebx
-	call put_queue
-none:	ret
+	nop
+	ret
 
 /*
  * minus has a routine of it's own, as a 'E0h' before
  * the scan code for minus means that the numeric keypad
  * slash was pushed.
  */
-minus:	cmpb $1,e0
-	jne do_self
-	movl $'/,%eax
-	xorl %ebx,%ebx
-	jmp put_queue
+minus:
+	nop
 
 /*
  * This table decides which routine to call when a scan-code has been
@@ -570,19 +343,12 @@ key_table:
  * there is no timeout - if the buffer doesn't empty, we hang.
  */
 kb_wait:
-	pushl %eax
-1:	inb $0x64,%al
-	testb $0x02,%al
-	jne 1b
-	popl %eax
+	nop
 	ret
 /*
  * This routine reboots the machine by asking the keyboard
  * controller to pulse the reset-line low.
  */
 reboot:
-	call kb_wait
-	movw $0x1234,0x472	/* don't do memory check */
-	movb $0xfc,%al		/* pulse reset and A20 low */
-	outb %al,$0x64
-die:	jmp die
+	nop
+die:	j die

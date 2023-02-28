@@ -1,3 +1,5 @@
+#include "asm/dummy.h"
+
 /*
  *  linux/kernel/hd.c
  *
@@ -59,10 +61,10 @@ static struct hd_struct {
 } hd[5*MAX_HD]={{0,0},};
 
 #define port_read(port,buf,nr) \
-__asm__("cld;rep;insw"::"d" (port),"D" (buf),"c" (nr):) 
+DUMMY_ASM("cld;rep;insw"::"d" (port),"D" (buf),"c" (nr):) 
 
 #define port_write(port,buf,nr) \
-__asm__("cld;rep;outsw"::"d" (port),"S" (buf),"c" (nr):) 
+DUMMY_ASM("cld;rep;outsw"::"d" (port),"S" (buf),"c" (nr):) 
 
 extern void hd_interrupt(void);
 extern void rd_load(void);
@@ -307,9 +309,9 @@ void do_hd_request(void)
 	}
 	block += hd[dev].start_sect;
 	dev /= 5;
-	__asm__("divl %4":"=a" (block),"=d" (sec):"0" (block),"1" (0),
+	DUMMY_ASM("divl %4":"=a" (block),"=d" (sec):"0" (block),"1" (0),
 		"r" (hd_info[dev].sect));
-	__asm__("divl %4":"=a" (cyl),"=d" (head):"0" (block),"1" (0),
+	DUMMY_ASM("divl %4":"=a" (cyl),"=d" (head):"0" (block),"1" (0),
 		"r" (hd_info[dev].head));
 	sec++;
 	nsect = CURRENT->nr_sectors;

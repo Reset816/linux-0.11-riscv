@@ -1,3 +1,5 @@
+#include "asm/dummy.h"
+
 /*
  *  linux/kernel/traps.c
  *
@@ -21,19 +23,19 @@
 
 #define get_seg_byte(seg,addr) ({ \
 register char __res; \
-__asm__("push %%fs;mov %%ax,%%fs;movb %%fs:%2,%%al;pop %%fs" \
+DUMMY_ASM("push %%fs;mov %%ax,%%fs;movb %%fs:%2,%%al;pop %%fs" \
 	:"=a" (__res):"0" (seg),"m" (*(addr))); \
 __res;})
 
 #define get_seg_long(seg,addr) ({ \
 register unsigned long __res; \
-__asm__("push %%fs;mov %%ax,%%fs;movl %%fs:%2,%%eax;pop %%fs" \
+DUMMY_ASM("push %%fs;mov %%ax,%%fs;movl %%fs:%2,%%eax;pop %%fs" \
 	:"=a" (__res):"0" (seg),"m" (*(addr))); \
 __res;})
 
 #define _fs() ({ \
 register unsigned short __res; \
-__asm__("mov %%fs,%%ax":"=a" (__res):); \
+DUMMY_ASM("mov %%fs,%%ax":"=a" (__res):); \
 __res;})
 
 int do_exit(long code);
@@ -106,7 +108,7 @@ void do_int3(long * esp, long error_code,
 {
 	int tr;
 
-	__asm__("str %%ax":"=a" (tr):"0" (0));
+	DUMMY_ASM("str %%ax":"=a" (tr):"0" (0));
 	printk("eax\t\tebx\t\tecx\t\tedx\n\r%8x\t%8x\t%8x\t%8x\n\r",
 		eax,ebx,ecx,edx);
 	printk("esi\t\tedi\t\tebp\t\tesp\n\r%8x\t%8x\t%8x\t%8x\n\r",

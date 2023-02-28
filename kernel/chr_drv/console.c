@@ -1,3 +1,5 @@
+#include "asm/dummy.h"
+
 /*
  *  linux/kernel/console.c
  *
@@ -113,7 +115,7 @@ static void scrup(void)
 			pos += video_size_row;
 			scr_end += video_size_row;
 			if (scr_end > video_mem_end) {
-				__asm__("cld\n\t"
+				DUMMY_ASM("cld\n\t"
 					"rep\n\t"
 					"movsl\n\t"
 					"movl video_num_columns,%1\n\t"
@@ -128,7 +130,7 @@ static void scrup(void)
 				pos -= origin-video_mem_start;
 				origin = video_mem_start;
 			} else {
-				__asm__("cld\n\t"
+				DUMMY_ASM("cld\n\t"
 					"rep\n\t"
 					"stosw"
 					::"a" (video_erase_char),
@@ -138,7 +140,7 @@ static void scrup(void)
 			}
 			set_origin();
 		} else {
-			__asm__("cld\n\t"
+			DUMMY_ASM("cld\n\t"
 				"rep\n\t"
 				"movsl\n\t"
 				"movl video_num_columns,%%ecx\n\t"
@@ -153,7 +155,7 @@ static void scrup(void)
 	}
 	else		/* Not EGA/VGA */
 	{
-		__asm__("cld\n\t"
+		DUMMY_ASM("cld\n\t"
 			"rep\n\t"
 			"movsl\n\t"
 			"movl video_num_columns,%%ecx\n\t"
@@ -171,7 +173,7 @@ static void scrdown(void)
 {
 	if (video_type == VIDEO_TYPE_EGAC || video_type == VIDEO_TYPE_EGAM)
 	{
-		__asm__("std\n\t"
+		DUMMY_ASM("std\n\t"
 			"rep\n\t"
 			"movsl\n\t"
 			"addl $2,%%edi\n\t"	/* %edi has been decremented by 4 */
@@ -186,7 +188,7 @@ static void scrdown(void)
 	}
 	else		/* Not EGA/VGA */
 	{
-		__asm__("std\n\t"
+		DUMMY_ASM("std\n\t"
 			"rep\n\t"
 			"movsl\n\t"
 			"addl $2,%%edi\n\t"	/* %edi has been decremented by 4 */
@@ -257,7 +259,7 @@ static void csi_J(int par)
 		default:
 			return;
 	}
-	__asm__("cld\n\t"
+	DUMMY_ASM("cld\n\t"
 		"rep\n\t"
 		"stosw\n\t"
 		::"c" (count),
@@ -288,7 +290,7 @@ static void csi_K(int par)
 		default:
 			return;
 	}
-	__asm__("cld\n\t"
+	DUMMY_ASM("cld\n\t"
 		"rep\n\t"
 		"stosw\n\t"
 		::"c" (count),
@@ -458,7 +460,7 @@ void con_write(struct tty_struct * tty)
 						pos -= video_size_row;
 						lf();
 					}
-					__asm__("movb attr,%%ah\n\t"
+					DUMMY_ASM("movb attr,%%ah\n\t"
 						"movw %%ax,%1\n\t"
 						::"a" (c),"m" (*(short *)pos)
 						:) ;

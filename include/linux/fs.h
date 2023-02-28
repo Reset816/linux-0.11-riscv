@@ -1,3 +1,5 @@
+#include "asm/dummy.h"
+
 /*
  * This file has definitions for some important file table
  * structures etc.
@@ -61,7 +63,7 @@ void buffer_init(long buffer_end);
 #define PIPE_EMPTY(inode) (PIPE_HEAD(inode)==PIPE_TAIL(inode))
 #define PIPE_FULL(inode) (PIPE_SIZE(inode)==(PAGE_SIZE-1))
 #define INC_PIPE(head) \
-__asm__("incl %0\n\tandl $4095,%0"::"m" (head))
+DUMMY_ASM("incl %0\n\tandl $4095,%0"::"m" (head))
 
 typedef char buffer_block[BLOCK_SIZE];
 

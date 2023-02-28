@@ -1,3 +1,5 @@
+#include "asm/dummy.h"
+
 /*
  *  linux/kernel/floppy.c
  *
@@ -48,7 +50,7 @@ static int seek = 0;
 extern unsigned char current_DOR;
 
 #define immoutb_p(val,port) \
-__asm__("outb %0,%1\n\tjmp 1f\n1:\tjmp 1f\n1:"::"a" ((char) (val)),"i" (port))
+DUMMY_ASM("outb %0,%1\n\tjmp 1f\n1:\tjmp 1f\n1:"::"a" ((char) (val)),"i" (port))
 
 #define TYPE(x) ((x)>>2)
 #define DRIVE(x) ((x)&0x03)
@@ -153,7 +155,7 @@ repeat:
 }
 
 #define copy_buffer(from,to) \
-__asm__("cld ; rep ; movsl" \
+DUMMY_ASM("cld ; rep ; movsl" \
 	::"c" (BLOCK_SIZE/4),"S" ((long)(from)),"D" ((long)(to)) \
 	:) 
 
@@ -171,7 +173,7 @@ static void setup_DMA(void)
 	immoutb_p(4|2,10);
 /* output command byte. I don't know why, but everyone (minix, */
 /* sanches & canton) output this twice, first to 12 then to 11 */
- 	__asm__("outb %%al,$12\n\tjmp 1f\n1:\tjmp 1f\n1:\t"
+ 	DUMMY_ASM("outb %%al,$12\n\tjmp 1f\n1:\tjmp 1f\n1:\t"
 	"outb %%al,$11\n\tjmp 1f\n1:\tjmp 1f\n1:"::
 	"a" ((char) ((command == FD_READ)?DMA_READ:DMA_WRITE)));
 /* 8 low bits of addr */
@@ -396,7 +398,7 @@ static void reset_floppy(void)
 	do_floppy = reset_interrupt;
 	outb_p(current_DOR & ~0x04,FD_DOR);
 	for (i=0 ; i<100 ; i++)
-		__asm__("nop");
+		DUMMY_ASM("nop");
 	outb(current_DOR,FD_DOR);
 	sti();
 }
