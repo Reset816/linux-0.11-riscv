@@ -11,55 +11,41 @@
  * the page directory will exist. The startup code will be overwritten by
  * the page directory.
  */
+.equ	STACK_SIZE, 1024
+.equ	MAXNUM_CPU, 8
 .text
-.globl idt,gdt,pg_dir,tmp_floppy_area
-.globl startup_32
+.globl pg_dir,tmp_floppy_area,startup
 pg_dir:
-startup_32:
-	movl $0x10,%eax
-	mov %ax,%ds
-	mov %ax,%es
-	mov %ax,%fs
-	mov %ax,%gs
-	lss stack_start,%esp
-	call setup_idt
-	call setup_gdt
-	movl $0x10,%eax		# reload all the segment registers
-	mov %ax,%ds		# after changing gdt. CS was already
-	mov %ax,%es		# reloaded in 'setup_gdt'
-	mov %ax,%fs
-	mov %ax,%gs
-	lss stack_start,%esp
-	xorl %eax,%eax
-1:	incl %eax		# check that A20 really IS enabled
-	movl %eax,0x000000	# loop forever if it isn't
-	cmpl %eax,0x100000
-	je 1b
-/*
- * NOTE! 486 should set bit 16, to check for write-protect in supervisor
- * mode. Then it would be unnecessary with the "verify_area()"-calls.
- * 486 users probably want to set the NE (#5) bit also, so as to use
- * int 16 for math errors.
- */
-	movl %cr0,%eax		# check math chip
-	andl $0x80000011,%eax	# Save PG,PE,ET
-/* "orl $0x10020,%eax" here for 486 might be good */
-	orl $2,%eax		# set MP
-	movl %eax,%cr0
-	call check_x87
-	jmp after_page_tables
+startup:
+	# park harts with id != 0
+	csrr	t0, mhartid		# read current hart id
+	mv	tp, t0			# keep CPU's hartid in its tp for later usage.
+	bnez	t0, park		# if we're not on the hart 0
+					# we park the hart
+	# Setup stacks, the stack grows from bottom to top, so we put the
+	# stack pointer to the very end of the stack range.
+	slli	t0, t0, 10		# shift left the hart id by 1024
+	la	sp, stacks + STACK_SIZE	# set the initial stack pointer
+					# to the end of the first stack space
+	add	sp, sp, t0		# move the current hart stack pointer
+					# to its place in the stack space
+
+	j	start_kernel		# hart 0 jump to c
+
+park:
+	wfi
+	j	park
+
+stacks:
+	.skip	STACK_SIZE * MAXNUM_CPU # allocate space for all the harts stacks
+
+	.end				# End of file
 
 /*
  * We depend on ET to be correct. This checks for 287/387.
  */
 check_x87:
-	fninit
-	fstsw %ax
-	cmpb $0,%al
-	je 1f			/* no coprocessor: have to set bits */
-	movl %cr0,%eax
-	xorl $6,%eax		/* reset MP, set EM */
-	movl %eax,%cr0
+	nop
 	ret
 .align 2
 1:	.byte 0xDB,0xE4		/* fsetpm for 287, ignored by 387 */
@@ -77,20 +63,7 @@ check_x87:
  *  written by the page tables.
  */
 setup_idt:
-	lea ignore_int,%edx
-	movl $0x00080000,%eax
-	movw %dx,%ax		/* selector = 0x0008 = cs */
-	movw $0x8E00,%dx	/* interrupt gate - dpl=0, present */
-
-	lea idt,%edi
-	mov $256,%ecx
-rp_sidt:
-	movl %eax,(%edi)
-	movl %edx,4(%edi)
-	addl $8,%edi
-	dec %ecx
-	jne rp_sidt
-	lidt idt_descr
+	nop
 	ret
 
 /*
@@ -104,7 +77,7 @@ rp_sidt:
  *  This routine will beoverwritten by the page tables.
  */
 setup_gdt:
-	lgdt gdt_descr
+	nop
 	ret
 
 /*
@@ -134,14 +107,9 @@ tmp_floppy_area:
 	.fill 1024,1,0
 
 after_page_tables:
-	pushl $0		# These are the parameters to main :-)
-	pushl $0
-	pushl $0
-	pushl $L6		# return address for main, if it decides to.
-	pushl $main
-	jmp setup_paging
+	nop
 L6:
-	jmp L6			# main should never return here, but
+	j L6			# main should never return here, but
 				# just in case, we know what happens.
 
 /* This is the default interrupt "handler" :-) */
@@ -149,26 +117,8 @@ int_msg:
 	.asciz "Unknown interrupt\n\r"
 .align 2
 ignore_int:
-	pushl %eax
-	pushl %ecx
-	pushl %edx
-	push %ds
-	push %es
-	push %fs
-	movl $0x10,%eax
-	mov %ax,%ds
-	mov %ax,%es
-	mov %ax,%fs
-	pushl $int_msg
-	call printk
-	popl %eax
-	pop %fs
-	pop %es
-	pop %ds
-	popl %edx
-	popl %ecx
-	popl %eax
-	iret
+	nop
+	mret
 
 
 /*
@@ -197,43 +147,8 @@ ignore_int:
  */
 .align 2
 setup_paging:
-	movl $1024*5,%ecx		/* 5 pages - pg_dir+4 page tables */
-	xorl %eax,%eax
-	xorl %edi,%edi			/* pg_dir is at 0x000 */
-	cld;rep;stosl
-	movl $pg0+7,pg_dir		/* set present bit/user r/w */
-	movl $pg1+7,pg_dir+4		/*  --------- " " --------- */
-	movl $pg2+7,pg_dir+8		/*  --------- " " --------- */
-	movl $pg3+7,pg_dir+12		/*  --------- " " --------- */
-	movl $pg3+4092,%edi
-	movl $0xfff007,%eax		/*  16Mb - 4096 + 7 (r/w user,p) */
-	std
-1:	stosl			/* fill pages backwards - more efficient :-) */
-	subl $0x1000,%eax
-	jge 1b
-	xorl %eax,%eax		/* pg_dir is at 0x0000 */
-	movl %eax,%cr3		/* cr3 - page directory start */
-	movl %cr0,%eax
-	orl $0x80000000,%eax
-	movl %eax,%cr0		/* set paging (PG) bit */
+	nop
 	ret			/* this also flushes prefetch-queue */
 
 .align 2
 .word 0
-idt_descr:
-	.word 256*8-1		# idt contains 256 entries
-	.long idt
-.align 2
-.word 0
-gdt_descr:
-	.word 256*8-1		# so does gdt (not that that's any
-	.long gdt		# magic number, but it works for me :^)
-
-	.align 8        # gas are different nowadays
-idt:	.fill 256,8,0		# idt is uninitialized
-
-gdt:	.quad 0x0000000000000000	/* NULL descriptor */
-	.quad 0x00c09a0000000fff	/* 16Mb */
-	.quad 0x00c0920000000fff	/* 16Mb */
-	.quad 0x0000000000000000	/* TEMPORARY - don't use */
-	.fill 252,8,0			/* space for LDT's and TSS's etc */
