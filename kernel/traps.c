@@ -71,7 +71,7 @@ static void die(char * str,long esp_ptr,long nr)
 	printk("EIP:\t%04x:%p\nEFLAGS:\t%p\nESP:\t%04x:%p\n",
 		esp[1],esp[0],esp[2],esp[4],esp[3]);
 	printk("fs: %04x\n",_fs());
-	printk("base: %p, limit: %p\n",get_base(current->ldt[1]),get_limit(0x17));
+	// printk("base: %p, limit: %p\n",get_base(current->ldt[1]),get_limit(0x17));
 	if (esp[4] == 0x17) {
 		printk("Stack: ");
 		for (i=0;i<4;i++)

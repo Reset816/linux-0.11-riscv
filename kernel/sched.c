@@ -391,15 +391,15 @@ void sched_init(void)
 
 	if (sizeof(struct sigaction) != 16)
 		panic("Struct sigaction MUST be 16 bytes");
-	set_tss_desc(gdt+FIRST_TSS_ENTRY,&(init_task.task.tss));
-	set_ldt_desc(gdt+FIRST_LDT_ENTRY,&(init_task.task.ldt));
-	p = gdt+2+FIRST_TSS_ENTRY;
+	// set_tss_desc(gdt+FIRST_TSS_ENTRY,&(init_task.task.tss));
+	// set_ldt_desc(gdt+FIRST_LDT_ENTRY,&(init_task.task.ldt));
+	// p = gdt+2+FIRST_TSS_ENTRY;
 	for(i=1;i<NR_TASKS;i++) {
 		task[i] = NULL;
-		p->a=p->b=0;
-		p++;
-		p->a=p->b=0;
-		p++;
+		// p->a=p->b=0;
+		// p++;
+		// p->a=p->b=0;
+		// p++;
 	}
 /* Clear NT, so that we won't have troubles with that later on */
 	DUMMY_ASM("pushfl ; andl $0xffffbfff,(%esp) ; popfl");

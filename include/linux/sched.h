@@ -72,7 +72,7 @@ struct tss_struct {
 	long	ds;		/* 16 high bits zero */
 	long	fs;		/* 16 high bits zero */
 	long	gs;		/* 16 high bits zero */
-	long	ldt;		/* 16 high bits zero */
+	// long	ldt;		/* 16 high bits zero */
 	long	trace_bitmap;	/* bits: trace 0, bitmap 16-31 */
 	struct i387_struct i387;
 };
@@ -103,7 +103,7 @@ struct task_struct {
 	unsigned long close_on_exec;
 	struct file * filp[NR_OPEN];
 /* ldt for this task 0 - zero 1 - cs 2 - ds&ss */
-	struct desc_struct ldt[3];
+	// struct desc_struct ldt[3];
 /* tss for this task */
 	struct tss_struct tss;
 };
@@ -122,15 +122,10 @@ struct task_struct {
 /* math */	0, \
 /* fs info */	-1,0022,NULL,NULL,NULL,0, \
 /* filp */	{NULL,}, \
-	{ \
-		{0,0}, \
-/* ldt */	{0x9f,0xc0fa00}, \
-		{0x9f,0xc0f200}, \
-	}, \
 /*tss*/	{0,PAGE_SIZE+(long)&init_task,0x10,0,0,0,0,(long)&pg_dir,\
 	 0,0,0,0,0,0,0,0, \
 	 0,0,0x17,0x17,0x17,0x17,0x17,0x17, \
-	 _LDT(0),0x80000000, \
+	 0x80000000, \
 		{} \
 	}, \
 }
@@ -155,7 +150,7 @@ extern void wake_up(struct task_struct ** p);
 #define FIRST_TSS_ENTRY 4
 #define FIRST_LDT_ENTRY (FIRST_TSS_ENTRY+1)
 #define _TSS(n) ((((unsigned long) n)<<4)+(FIRST_TSS_ENTRY<<3))
-#define _LDT(n) ((((unsigned long) n)<<4)+(FIRST_LDT_ENTRY<<3))
+// #define _LDT(n) ((((unsigned long) n)<<4)+(FIRST_LDT_ENTRY<<3))
 #define ltr(n) DUMMY_ASM("ltr %%ax"::"a" (_TSS(n)))
 #define lldt(n) DUMMY_ASM("lldt %%ax"::"a" (_LDT(n)))
 #define str(n) \
@@ -246,7 +241,7 @@ static inline unsigned long _get_base(char * addr)
          return __base;
 }
 
-#define get_base(ldt) _get_base( ((char *)&(ldt)) )
+// #define get_base(ldt) _get_base( ((char *)&(ldt)) )
 
 #define get_limit(segment) ({ \
 unsigned long __limit; \

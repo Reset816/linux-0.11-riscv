@@ -30,7 +30,7 @@ void verify_area(void * addr,int size)
 	start = (unsigned long) addr;
 	size += start & 0xfff;
 	start &= 0xfffff000;
-	start += get_base(current->ldt[2]);
+	// start += get_base(current->ldt[2]);
 	while (size>0) {
 		size -= 4096;
 		write_verify(start);
@@ -45,8 +45,8 @@ int copy_mem(int nr,struct task_struct * p)
 
 	code_limit=get_limit(0x0f);
 	data_limit=get_limit(0x17);
-	old_code_base = get_base(current->ldt[1]);
-	old_data_base = get_base(current->ldt[2]);
+	// old_code_base = get_base(current->ldt[1]);
+	// old_data_base = get_base(current->ldt[2]);
 	if (old_data_base != old_code_base)
 		panic("We don't support separate I&D");
 	if (data_limit < code_limit)
@@ -111,7 +111,7 @@ int copy_process(int nr,long ebp,long edi,long esi,long gs,long none,
 	p->tss.ds = ds & 0xffff;
 	p->tss.fs = fs & 0xffff;
 	p->tss.gs = gs & 0xffff;
-	p->tss.ldt = _LDT(nr);
+	// p->tss.ldt = _LDT(nr);
 	p->tss.trace_bitmap = 0x80000000;
 	if (last_task_used_math == current)
 		DUMMY_ASM("clts ; fnsave %0"::"m" (p->tss.i387));
@@ -129,8 +129,8 @@ int copy_process(int nr,long ebp,long edi,long esi,long gs,long none,
 		current->root->i_count++;
 	if (current->executable)
 		current->executable->i_count++;
-	set_tss_desc(gdt+(nr<<1)+FIRST_TSS_ENTRY,&(p->tss));
-	set_ldt_desc(gdt+(nr<<1)+FIRST_LDT_ENTRY,&(p->ldt));
+	// set_tss_desc(gdt+(nr<<1)+FIRST_TSS_ENTRY,&(p->tss));
+	// set_ldt_desc(gdt+(nr<<1)+FIRST_LDT_ENTRY,&(p->ldt));
 	p->state = TASK_RUNNING;	/* do this last, just in case */
 	return last_pid;
 }

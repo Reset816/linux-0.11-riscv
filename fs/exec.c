@@ -153,30 +153,30 @@ static unsigned long copy_strings(int argc,char ** argv,unsigned long *page,
 	return p;
 }
 
-static unsigned long change_ldt(unsigned long text_size,unsigned long * page)
-{
-	unsigned long code_limit,data_limit,code_base,data_base;
-	int i;
+// static unsigned long change_ldt(unsigned long text_size,unsigned long * page)
+// {
+// 	unsigned long code_limit,data_limit,code_base,data_base;
+// 	int i;
 
-	code_limit = text_size+PAGE_SIZE -1;
-	code_limit &= 0xFFFFF000;
-	data_limit = 0x4000000;
-	code_base = get_base(current->ldt[1]);
-	data_base = code_base;
-	set_base(current->ldt[1],code_base);
-	set_limit(current->ldt[1],code_limit);
-	set_base(current->ldt[2],data_base);
-	set_limit(current->ldt[2],data_limit);
-/* make sure fs points to the NEW data segment */
-	DUMMY_ASM("pushl $0x17\n\tpop %%fs"::);
-	data_base += data_limit;
-	for (i=MAX_ARG_PAGES-1 ; i>=0 ; i--) {
-		data_base -= PAGE_SIZE;
-		if (page[i])
-			put_page(page[i],data_base);
-	}
-	return data_limit;
-}
+// 	code_limit = text_size+PAGE_SIZE -1;
+// 	code_limit &= 0xFFFFF000;
+// 	data_limit = 0x4000000;
+// 	code_base = get_base(current->ldt[1]);
+// 	data_base = code_base;
+// 	set_base(current->ldt[1],code_base);
+// 	set_limit(current->ldt[1],code_limit);
+// 	set_base(current->ldt[2],data_base);
+// 	set_limit(current->ldt[2],data_limit);
+// /* make sure fs points to the NEW data segment */
+// 	DUMMY_ASM("pushl $0x17\n\tpop %%fs"::);
+// 	data_base += data_limit;
+// 	for (i=MAX_ARG_PAGES-1 ; i>=0 ; i--) {
+// 		data_base -= PAGE_SIZE;
+// 		if (page[i])
+// 			put_page(page[i],data_base);
+// 	}
+// 	return data_limit;
+// }
 
 /*
  * 'do_execve()' executes a new program.
@@ -327,12 +327,12 @@ restart_interp:
 		if ((current->close_on_exec>>i)&1)
 			sys_close(i);
 	current->close_on_exec = 0;
-	free_page_tables(get_base(current->ldt[1]),get_limit(0x0f));
-	free_page_tables(get_base(current->ldt[2]),get_limit(0x17));
+	// free_page_tables(get_base(current->ldt[1]),get_limit(0x0f));
+	// free_page_tables(get_base(current->ldt[2]),get_limit(0x17));
 	if (last_task_used_math == current)
 		last_task_used_math = NULL;
 	current->used_math = 0;
-	p += change_ldt(ex.a_text,page)-MAX_ARG_PAGES*PAGE_SIZE;
+	// p += change_ldt(ex.a_text,page)-MAX_ARG_PAGES*PAGE_SIZE;
 	p = (unsigned long) create_tables((char *)p,argc,envc);
 	current->brk = ex.a_bss +
 		(current->end_data = ex.a_data +
