@@ -26,10 +26,11 @@
 #include <asm/system.h>
 #include <asm/io.h>
 
-extern int end;
+// extern int end; TODO
 extern void put_super(int);
 extern void invalidate_inodes(int); // fix -Wimplicit-function-declaration
-struct buffer_head * start_buffer = (struct buffer_head *) &end;
+// struct buffer_head * start_buffer = (struct buffer_head *) &end;
+struct buffer_head * start_buffer;
 struct buffer_head * hash_table[NR_HASH];
 static struct buffer_head * free_list;
 static struct task_struct * buffer_wait = NULL;
