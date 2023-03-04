@@ -151,6 +151,11 @@ void main(void)		/* This really IS void, no error here. */
 	for(;;) pause();
 }
 
+void start_kernel()
+{
+	main();
+}
+
 static int printf(const char *fmt, ...)
 {
 	va_list args;

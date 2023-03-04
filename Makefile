@@ -4,14 +4,18 @@
 #
 RAMDISK = #-DRAMDISK=512
 
-AS86	=as86 -0 -a
-LD86	=ld86 -0
-
 include config.mk
 
 CFLAGS  += $(RAMDISK)
-LDFLAGS += -Ttext 0 -e startup_32
 CPP		 += -Iinclude
+
+KERN_BIN := Image
+
+QFLAGS := 	-machine virt \
+			-serial mon:stdio \
+			-bios ./boot/fw_jump.bin \
+			-nographic \
+			-device loader,file=$(KERN_BIN),addr=0x80200000
 
 #
 # ROOT_DEV specifies the default root-device when making the image.
@@ -34,19 +38,7 @@ LIBS	=lib/lib.a
 	$(CC) $(CFLAGS) \
 	-nostdinc -Iinclude -c -o $*.o $<
 
-all:	Image
-
-Image: boot/bootsect boot/setup tools/system tools/build
-	cp -f tools/system system.tmp
-	strip system.tmp
-	objcopy -O binary -R .note -R .comment system.tmp tools/kernel
-	tools/build boot/bootsect boot/setup tools/kernel $(ROOT_DEV) > Image
-	rm system.tmp
-	rm tools/kernel -f
-	sync
-
-disk: Image
-	dd bs=8192 if=Image of=/dev/PS0
+all:	vmlinux
 
 tools/build: tools/build.c
 	$(CC) $(CFLAGS) \
@@ -54,15 +46,15 @@ tools/build: tools/build.c
 
 boot/head.o: boot/head.s
 
-tools/system:	boot/head.o init/main.o \
+vmlinux:	boot/head.o init/main.o \
 		$(ARCHIVES) $(DRIVERS) $(MATH) $(LIBS)
-	$(LD) $(LDFLAGS) boot/head.o init/main.o \
+	$(LD) -T linker.ld boot/head.o init/main.o \
 	$(ARCHIVES) \
 	$(DRIVERS) \
 	$(MATH) \
 	$(LIBS) \
-	-o tools/system > System.map
-	nm tools/system | grep -v '\(compiled\)\|\(\.o$$\)\|\( [aU] \)\|\(\.\.ng$$\)\|\(LASH[RL]DI\)'| sort > System.map
+	-Map=System.map -o vmlinux
+	$(OBJCOPY) vmlinux --strip-all -O binary $(KERN_BIN)
 
 kernel/math/math.a:
 	(cd kernel/math; make)
@@ -85,21 +77,8 @@ fs/fs.o:
 lib/lib.a:
 	(cd lib; make)
 
-boot/setup: boot/setup.s
-	$(AS86) -o boot/setup.o boot/setup.s
-	$(LD86) -s -o boot/setup boot/setup.o
-
-boot/bootsect:	boot/bootsect.s
-	$(AS86) -o boot/bootsect.o boot/bootsect.s
-	$(LD86) -s -o boot/bootsect boot/bootsect.o
-
-tmp.s:	boot/bootsect.s tools/system
-	(echo -n "SYSSIZE = (";ls -l tools/system | grep system \
-		| cut -c25-31 | tr '\012' ' '; echo "+ 15 ) / 16") > tmp.s
-	cat boot/bootsect.s >> tmp.s
-
 clean:
-	rm -f Image System.map tmp_make core boot/bootsect boot/setup
+	rm -f $(KERN_BIN) System.map tmp_make core vmlinux
 	rm -f init/*.o tools/system tools/build boot/*.o
 	(cd mm;make clean)
 	(cd fs;make clean)
@@ -126,5 +105,13 @@ init/main.o : init/main.c include/unistd.h include/sys/stat.h \
   include/linux/mm.h include/signal.h include/asm/system.h include/asm/io.h \
   include/stddef.h include/stdarg.h include/fcntl.h 
 
-start: Image
-	qemu-system-i386 -m 16M -boot a -fda Image -hda hdc-0.11.img -display curses
+run: vmlinux
+	@echo "Press Ctrl-A and then X to exit QEMU"
+	@echo "------------------------------------"
+	@${QEMU} ${QFLAGS}
+
+debug: vmlinux
+	@echo "Press Ctrl-A and then X to exit QEMU"
+	@echo "------------------------------------"
+	$(TMUX) new -s debug -d "${QEMU} ${QFLAGS} -s -S" && $(TMUX) split-window -h "${GDB} -q"
+	$(TMUX) attach-session -t debug
