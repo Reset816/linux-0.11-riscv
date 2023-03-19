@@ -44,6 +44,7 @@ static inline _syscall0(int,sync)
 
 static char printbuf[1024];
 
+extern int printk(const char * fmt, ...);
 extern int vsprintf();
 extern void init(void);
 extern void blk_dev_init(void);
@@ -110,6 +111,10 @@ void main(void)		/* This really IS void, no error here. */
  * Interrupts are still disabled. Do necessary setups, then
  * enable them
  */
+	tty_init();
+	printk("starting kernel\n");
+	while (1);
+
  	ROOT_DEV = ORIG_ROOT_DEV;
  	drive_info = DRIVE_INFO;
 	memory_end = (1<<20) + (EXT_MEM_K<<10);

@@ -19,7 +19,7 @@ CPP		+= -I../../include
 	$(CC) $(CFLAGS) \
 	-c -o $*.o $<
 
-OBJS  = tty_io.o console.o keyboard.o serial.o rs_io.o \
+OBJS  = tty_io.o console.o keyboard.o serial.o \
 	tty_ioctl.o
 
 chr_drv.a: $(OBJS)

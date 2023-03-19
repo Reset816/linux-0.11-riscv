@@ -13,6 +13,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <sys/types.h>
 
 /* we use this so that we can do without the ctype library */
 #define is_digit(c)	((c) >= '0' && (c) <= '9')
@@ -34,10 +35,13 @@ static int skip_atoi(const char **s)
 #define SPECIAL	32		/* 0x */
 #define SMALL	64		/* use 'abcdef' instead of 'ABCDEF' */
 
-#define do_div(n,base) ({ \
-int __res; \
-DUMMY_ASM("divl %4":"=a" (n),"=d" (__res):"0" (n),"1" (0),"r" (base)); \
-__res; })
+#define do_div(n,base) ({				\
+	uint32_t __base = (base);				\
+	uint32_t __rem;					\
+	__rem = ((uint64_t)(n)) % __base;			\
+	(n) = ((uint64_t)(n)) / __base;			\
+	__rem;						\
+ })
 
 static char * number(char * str, int num, int base, int size, int precision
 	,int type)

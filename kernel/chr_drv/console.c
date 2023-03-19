@@ -618,6 +618,9 @@ void con_write(struct tty_struct * tty)
  */
 void con_init(void)
 {
+	/* FIXME: no video console implemented */
+	return;
+
 	register unsigned char a;
 	char *display_desc = "????";
 	char *display_ptr;
@@ -709,4 +712,15 @@ static void sysbeep(void)
 	outb(0x06, 0x42);
 	/* 1/8 second */
 	beepcount = HZ/8;	
+}
+
+void console_print(const char * b)
+{
+	char c;
+
+	/* FIXME: route to uart port */
+	while (c = *(b++))
+		uart_putc(c);
+
+	return;
 }

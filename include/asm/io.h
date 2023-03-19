@@ -1,26 +1,15 @@
-#include "asm/dummy.h"
-
 #define outb(value,port) \
-DUMMY_ASM ("outb %%al,%%dx"::"a" (value),"d" (port))
-
+	*(volatile unsigned char *) (port) = (unsigned char) (value)
 
 #define inb(port) ({ \
-unsigned char _v; \
-DUMMY_ASM ("inb %%dx,%%al":"=a" (_v):"d" (port)); \
+unsigned char _v; _v = *(volatile unsigned char *)(port); \
 _v; \
 })
 
 #define outb_p(value,port) \
-DUMMY_ASM ("outb %%al,%%dx\n" \
-		"\tjmp 1f\n" \
-		"1:\tjmp 1f\n" \
-		"1:"::"a" (value),"d" (port))
+	*(volatile unsigned char *) (port) = (unsigned char) (value)
 
 #define inb_p(port) ({ \
-unsigned char _v; \
-DUMMY_ASM ("inb %%dx,%%al\n" \
-	"\tjmp 1f\n" \
-	"1:\tjmp 1f\n" \
-	"1:":"=a" (_v):"d" (port)); \
+unsigned char _v; _v = *(volatile unsigned char *)(port); \
 _v; \
 })

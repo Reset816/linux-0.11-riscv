@@ -183,7 +183,7 @@ static void hd_out(unsigned int drive,unsigned int nsect,unsigned int sect,
 		unsigned int head,unsigned int cyl,unsigned int cmd,
 		void (*intr_addr)(void))
 {
-	register int port asm("dx");
+	int port;
 
 	if (drive>1 || head>15)
 		panic("Trying to write bad sector");
