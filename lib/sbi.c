@@ -116,43 +116,43 @@ void print_system_infomation()
     struct sbiret ret;
     ret = sbi_probe_extension(TIMER_EXTENTION);
     if (ret.value != 0)
-        kputs("TIMER_EXTENTION: available");
+        sbiputs("TIMER_EXTENTION: available");
     else
-        kputs("TIMER_EXTENTION: unavailable");
+        sbiputs("TIMER_EXTENTION: unavailable");
 
     ret = sbi_probe_extension(HART_STATE_EXTENTION);
     if (ret.value != 0)
-        kputs("HART_STATE_EXTENTION: available");
+        sbiputs("HART_STATE_EXTENTION: available");
     else
-        kputs("HART_STATE_EXTENTION: unavailable");
+        sbiputs("HART_STATE_EXTENTION: unavailable");
 
     ret = sbi_probe_extension(RESET_EXTENTION);
     if (ret.value != 0)
-        kputs("RESET_EXTENTION: available");
+        sbiputs("RESET_EXTENTION: available");
     else
-        kputs("RESET_EXTENTION: unavailable");
+        sbiputs("RESET_EXTENTION: unavailable");
 
     ret = sbi_get_impl_id();
     switch (ret.value) {
     case BERKELY_BOOT_LOADER:
-        kputs("Implemention ID: Berkely boot loader");
+        sbiputs("Implemention ID: Berkely boot loader");
         break;
     case OPENSBI:
-        kputs("Implemention ID: OpenSBI");
+        sbiputs("Implemention ID: OpenSBI");
         break;
     case XVISOR:
-        kputs("Implemention ID: XVISOR");
+        sbiputs("Implemention ID: XVISOR");
         break;
     case KVM:
-        kputs("Implemention ID: KVM");
+        sbiputs("Implemention ID: KVM");
         break;
     case RUSTSBI:
-        kputs("Implemention ID: RustSBI");
+        sbiputs("Implemention ID: RustSBI");
         break;
     case DIOSIX:
-        kputs("Implemention ID: DIOSIX");
+        sbiputs("Implemention ID: DIOSIX");
         break;
     default:
-        kputs("Implemention ID: Unkonwn");
+        sbiputs("Implemention ID: Unkonwn");
     }
 }

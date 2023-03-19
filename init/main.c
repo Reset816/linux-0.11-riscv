@@ -42,6 +42,8 @@ static inline _syscall0(int,sync)
 
 #include <linux/fs.h>
 
+#include <kdebug.h>
+
 static char printbuf[1024];
 
 extern int printk(const char * fmt, ...);
@@ -113,6 +115,7 @@ void main(void)		/* This really IS void, no error here. */
  */
 	tty_init();
 	printk("starting kernel\n");
+	sbiprintf("sbi running\n");
 	while (1);
 
  	ROOT_DEV = ORIG_ROOT_DEV;

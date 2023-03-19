@@ -103,7 +103,7 @@ init/main.o : init/main.c include/unistd.h include/sys/stat.h \
   include/utime.h include/time.h include/linux/tty.h include/termios.h \
   include/linux/sched.h include/linux/head.h include/linux/fs.h \
   include/linux/mm.h include/signal.h include/asm/system.h include/asm/io.h \
-  include/stddef.h include/stdarg.h include/fcntl.h 
+  include/stddef.h include/stdarg.h include/fcntl.h include/kdebug.h
 
 run: vmlinux
 	@echo "Press Ctrl-A and then X to exit QEMU"
